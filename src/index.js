@@ -17,7 +17,7 @@ const upload = multer();
 app.use(upload.any());
 
 app.use("/api/auth", authRoutes);
-app.use("/api/message", );
+app.use("/api/message", messageRoutes);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
