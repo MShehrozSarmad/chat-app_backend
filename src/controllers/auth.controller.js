@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { genJWT } from "../utils/genToken.js";
 import cloudinary from "../lib/cloudinary.js";
+import getPublicId from "../utils/getPublicId.js";
 
 const signup = async (req, res) => {
 	const { name, email, password } = req.body;
@@ -90,16 +91,25 @@ const signout = async (_, res) => {
 };
 
 const updateProfile = async (req, res) => {
-	const {name, profile_pic } = req.body;
+	const { profile_pic } = req.body;
 
-	console.log(name, profile_pic);
-
-	if (!profile_pic)
-		return res.status(400).json({ message: "image file is required" });
+	if (
+		!profile_pic ||
+		!profile_pic.includes(",") ||
+		profile_pic.split(",")[1].trim() === ""
+	) {
+		return res.status(400).json({ message: "Image file is required" });
+	}
 
 	const user = req.user;
+	const prevPic = user.profile_pic;
 
 	try {
+		if (prevPic) {
+			const id_prevPic = getPublicId(prevPic);
+			await cloudinary.uploader.destroy(id_prevPic);
+		}
+
 		const cloudRes = await cloudinary.uploader.upload(profile_pic);
 		if (!cloudRes)
 			return res.status(500).json({ message: "failed to upload image" });
@@ -114,7 +124,7 @@ const updateProfile = async (req, res) => {
 	}
 };
 
-const testAuth = (req, res) => {
+const checkAuth = (req, res) => {
 	try {
 		res.status(200).json(req.user);
 	} catch (error) {
@@ -123,4 +133,4 @@ const testAuth = (req, res) => {
 	}
 };
 
-export { signup, signin, signout, updateProfile, testAuth };
+export { signup, signin, signout, updateProfile, checkAuth };
